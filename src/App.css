@@ -1,0 +1,139 @@
+.bg-soft-pink {
+  background-color: #fff5f8;
+}
+.bg-dark-pink {
+  background-color: #d63384 !important;
+}
+.text-dark-pink {
+  color: #d63384;
+}
+
+.rounded-4 {
+  border-radius: 1.25rem !important;
+}
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(214, 51, 132, 0.075) !important;
+}
+
+.app-wrapper {
+  padding-bottom: 75px;
+  padding-top: 0;
+}
+
+.custom-navbar {
+  position: fixed;
+  bottom: 0;
+  top: auto;
+  width: 100%;
+  z-index: 1030;
+  padding: 8px 5px;
+  box-shadow: 0 -2px 10px rgba(214, 51, 132, 0.2);
+}
+
+.brand-logo {
+  display: none;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
+}
+
+.custom-nav-link,
+.logout-btn {
+  background: transparent;
+  border: none;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.custom-nav-link i,
+.logout-btn i {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.custom-nav-link.custom-active,
+.custom-nav-link:hover,
+.logout-btn:hover {
+  color: white !important;
+  background-color: #fff5f86a;
+  border-radius: 10px;
+}
+
+@media (min-width: 992px) {
+  .app-wrapper {
+    padding-top: 80px;
+    padding-bottom: 0;
+  }
+
+  .custom-navbar {
+    top: 0;
+    bottom: auto;
+    padding: 15px 30px;
+    box-shadow: 0 2px 10px rgba(214, 51, 132, 0.2);
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 22px;
+    text-decoration: none;
+  }
+
+  .brand-logo:hover {
+    color: white;
+  }
+
+  .nav-menu {
+    width: auto;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .custom-nav-link {
+    flex-direction: row;
+    font-size: 16px;
+    padding: 8px 15px;
+  }
+
+  .custom-nav-link i {
+    display: none;
+  }
+  .nav-text {
+    display: inline;
+  }
+
+  .custom-nav-link.custom-active {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    font-weight: bold;
+  }
+
+  .logout-btn {
+    flex-direction: row;
+    font-size: 15px;
+    padding: 7px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    margin-left: 10px;
+  }
+
+  .logout-btn i {
+    display: none;
+  }
+}

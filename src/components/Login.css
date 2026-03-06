@@ -1,0 +1,65 @@
+.btn {
+  color: white;
+}
+.btn:hover {
+  color: white;
+}
+.text {
+  color: rgb(214, 51, 132);
+}
+
+.custom-inputs:focus {
+  border-color: #d63384 !important;
+  box-shadow: 0 0 0 0.25rem rgba(214, 51, 132, 0.25) !important;
+}
+
+.form-floating > .form-control:focus ~ label {
+  color: #d63384 !important;
+}
+
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+  color: #d63384;
+}
+
+.input-group .input-group-text {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+  background-color: #f8f9fa;
+}
+
+.input-group .form-floating .form-control {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: none !important;
+}
+
+.input-group:focus-within {
+  border-radius: 0.375rem;
+}
+
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control {
+  border-color: #d63384 !important;
+}
+.input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important; 
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+
+.input-group .form-floating {
+  position: relative;
+  flex: 1 1 auto !important; 
+  width: 1% !important; 
+  min-width: 0 !important; 
+}
+
+.input-group .input-group-text {
+  white-space: nowrap; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

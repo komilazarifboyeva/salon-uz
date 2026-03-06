@@ -1,0 +1,44 @@
+.btn {
+  background-color: rgb(214, 51, 132);
+  border: none;
+}
+.btn:hover {
+  background-color: rgb(214, 51, 132);
+}
+.text {
+  text-align: center;
+}
+
+.custom-input:focus {
+  border-color: rgb(214, 51, 132);
+  box-shadow: 0 0 0 0.25rem rgba(214, 51, 132, 0.15);
+}
+.btn {
+  border-radius: 8px;
+}
+#floatingInput {
+  border: 1px solid rgba(241, 209, 225, 0.502);
+}
+
+
+.input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important; 
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+
+.input-group .form-floating {
+  position: relative;
+  flex: 1 1 auto !important; 
+  width: 1% !important; 
+  min-width: 0 !important; 
+}
+
+.input-group .input-group-text {
+  white-space: nowrap; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

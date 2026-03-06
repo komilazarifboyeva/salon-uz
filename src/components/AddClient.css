@@ -1,0 +1,96 @@
+.text-dark-pink {
+  color: rgb(214, 51, 132);
+}
+
+.bg-pink-soft {
+  background-color: rgb(255, 238, 246);
+}
+
+.text-pink {
+  color: rgb(214, 51, 132);
+}
+
+.btn-pink {
+  background-color: rgb(214, 51, 132);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+
+.btn-pink:hover {
+  background-color: rgb(184, 43, 111);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-pink:active {
+  transform: translateY(0);
+}
+
+.input-group .form-floating .form-control,
+.input-group .form-floating .form-select {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: none !important;
+}
+
+.input-group .input-group-text {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.form-control:focus {
+  border-color: #d63384 !important;
+  box-shadow: none !important;
+}
+
+.form-select:focus {
+  border-color: #d63384 !important;
+  box-shadow: none !important;
+}
+
+.input-group:focus-within {
+  border-radius: 1rem !important;
+  z-index: 5;
+}
+
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control,
+.input-group:focus-within .form-select {
+  border-color: #d63384 !important;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-select:focus ~ label {
+  color: #d63384 !important;
+}
+
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select:not([value=""]):valid ~ label {
+  color: #d63384;
+}
+.input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important; 
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+
+.input-group .form-floating {
+  position: relative;
+  flex: 1 1 auto !important; 
+  width: 1% !important; 
+  min-width: 0 !important; 
+}
+
+.input-group .input-group-text {
+  white-space: nowrap; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,67 @@
+.bg-pink-soft {
+  background-color: rgb(255, 240, 246) !important;
+}
+
+.text-pink {
+  color: rgb(214, 51, 132) !important;
+}
+
+.btn-pink {
+  background-color: rgb(214, 51, 132);
+  border-color: rgb(214, 51, 132);
+  color: white;
+}
+
+.btn-pink:hover {
+  background-color: rgb(184, 43, 113);
+  color: white;
+}
+
+.bg-success-light {
+  background-color: rgb(232, 245, 233);
+}
+
+.bg-warning-light {
+  background-color: rgb(255, 243, 224);
+}
+
+.uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+}
+
+.custom-inputs:focus {
+  border-color: #d63384 !important;
+  box-shadow: 0 0 0 0.25rem rgba(214, 51, 132, 0.25) !important;
+}
+
+.form-floating > .form-control:focus ~ label {
+  color: #d63384 !important;
+}
+
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+  color: #d63384;
+}
+
+.input-group .input-group-text {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: none !important;
+  background-color: #f8f9fa;
+}
+
+.input-group .form-floating .form-control {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: none !important;
+}
+
+.input-group:focus-within {
+  border-radius: 0.375rem;
+}
+
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control {
+  border-color: #d63384 !important;
+}
