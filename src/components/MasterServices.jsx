@@ -23,7 +23,6 @@ export default function MasterServices({ user }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Faqat joriy masterning xizmatlarini yuklash
   useEffect(() => {
     if (!user || !user.salonId || !user.name) return;
 
@@ -38,7 +37,6 @@ export default function MasterServices({ user }) {
         id: doc.id,
         ...doc.data(),
       }));
-      // Alifbo tartibida saralash
       servicesData.sort((a, b) => a.name.localeCompare(b.name));
       setServicesTable(servicesData);
     });
@@ -65,8 +63,8 @@ export default function MasterServices({ user }) {
           name: servicesForm.name,
           price: Number(servicesForm.price),
           duration: Number(servicesForm.duration),
-          masterName: user.name, // Avtomatik ulanadi
-          masterId: user.uid, // Avtomatik ulanadi
+          masterName: user.name,
+          masterId: user.uid,
           salonId: user.salonId,
         });
       }
@@ -111,7 +109,6 @@ export default function MasterServices({ user }) {
   return (
     <div className="container-fluid py-3">
       <div className="row g-4 mb-4">
-        {/* --- Chap Tomon: Forma --- */}
         <div className="col-12 col-lg-4">
           <div
             className={`card border-0 shadow-sm rounded-4 p-4  ${
@@ -210,7 +207,6 @@ export default function MasterServices({ user }) {
           </div>
         </div>
 
-        {/* --- O'ng Tomon: Jadval --- */}
         <div className="col-12 col-lg-8">
           <div className="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
             <div className="p-4 bg-white border-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
@@ -272,13 +268,13 @@ export default function MasterServices({ user }) {
                             onClick={() => openEdit(s)}
                             disabled={editId === s.id}
                           >
-                            <i className="bi bi-pencil-square fs-5"></i>
+                            <i className="bi bi-pencil-square fs-8"></i>
                           </button>
                           <button
-                            className="btn btn-sm btn-outline-danger border-0"
+                            className="btn btn-sm border-0"
                             onClick={() => deleteService(s.id)}
                           >
-                            <i className="bi bi-trash fs-5"></i>
+                            <i className="bi bi-trash fs-8"></i>
                           </button>
                         </td>
                       </tr>

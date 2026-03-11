@@ -53,7 +53,7 @@ export default function MasterDashboard({ user }) {
             .catch((e) => console.log("Brauzer avtomatik ovozni to'sdi:", e));
 
           setShowAlert(true);
-
+          
           setTimeout(() => {
             setShowAlert(false);
           }, 8000);

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "../firebase/firebaseConfig";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 
-const Navbat = ({ user }) => {
+export default function Navbat({ user }){
   const [mijozlar, setMijozlar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hozirgiVaqt, setHozirgiVaqt] = useState(new Date());
@@ -403,5 +403,3 @@ const Navbat = ({ user }) => {
     </div>
   );
 };
-
-export default Navbat;

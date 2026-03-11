@@ -30,7 +30,6 @@ export default function ClientsTable({ user }) {
     status: "",
   });
 
-  // 🔥 Vaqtni formatlash funksiyasi (Sekundlarsiz va Toshkent vaqtida)
   const formatDateTime = (dateString) => {
     if (!dateString) return "—";
     const date = new Date(dateString);

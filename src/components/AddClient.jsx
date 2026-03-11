@@ -22,8 +22,6 @@ export default function AddClient({ user }) {
   const [services, setServices] = useState([]);
   const [price, setPrice] = useState(0);
   const [duration, setDuration] = useState(0);
-
-  // 🔥 Alert uchun yangi state
   const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
@@ -76,7 +74,6 @@ export default function AddClient({ user }) {
         createdAt: serverTimestamp(),
       });
 
-      // 🔥 Alertni ko'rsatish va 5 soniyadan keyin o'chirish
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 5000);
 
@@ -128,7 +125,6 @@ export default function AddClient({ user }) {
       </div>
 
       <form onSubmit={handleSubmit} className="row g-3">
-        {/* Mijoz ismi */}
         <div className="col-md-6">
           <div className="input-group">
             <span className="input-group-text bg-light text-pink rounded-start-4">
@@ -149,7 +145,6 @@ export default function AddClient({ user }) {
           </div>
         </div>
 
-        {/* Telefon raqami */}
         <div className="col-md-6">
           <div className="input-group">
             <span className="input-group-text bg-light text-pink rounded-start-4">
@@ -172,7 +167,6 @@ export default function AddClient({ user }) {
           </div>
         </div>
 
-        {/* Xizmat turi */}
         <div className="col-md-6">
           <div className="input-group">
             <span className="input-group-text bg-light text-pink rounded-start-4">
@@ -198,7 +192,6 @@ export default function AddClient({ user }) {
           </div>
         </div>
 
-        {/* Narxi */}
         <div className="col-md-6">
           <div className="input-group">
             <span className="input-group-text bg-light text-pink rounded-start-4">
@@ -217,7 +210,6 @@ export default function AddClient({ user }) {
           </div>
         </div>
 
-        {/* Vaqti */}
         <div className="col-md-6">
           <div className="input-group">
             <span className="input-group-text bg-light text-pink rounded-start-4">
@@ -236,7 +228,6 @@ export default function AddClient({ user }) {
           </div>
         </div>
 
-        {/* Kelish vaqti */}
         <div className="col-md-6">
           <div className="input-group">
             <span className="input-group-text bg-light text-pink rounded-start-4">

@@ -20,7 +20,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [role, setRole] = useState("client");
   const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState(""); // 🔥 Yangi state: Muvaffaqiyat xabari uchun
+  const [successMsg, setSuccessMsg] = useState(""); 
 
   const [form, setForm] = useState({
     email: "",
@@ -74,7 +74,6 @@ export default function Register() {
         }
       }
 
-      // 1. Yangi foydalanuvchi yaratish
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         form.email,
@@ -82,7 +81,6 @@ export default function Register() {
       );
       const user = userCredential.user;
 
-      // 2. Bazaga ma'lumotlarni yozish
       if (role === "admin") {
         const salonRef = await addDoc(collection(db, "salons"), {
           salonName: form.salonName,
@@ -127,16 +125,13 @@ export default function Register() {
         });
       }
 
-      // 🔥 3. EMAIL TASDIQLASH JO'NATISH VA TIZIMDAN CHIQARISH
       await sendEmailVerification(user);
-      await signOut(auth); // Foydalanuvchini majburan saytdan chiqaramiz toki u pochtani tasdiqlamangunicha
+      await signOut(auth); 
 
-      // 4. Muvaffaqiyat xabarini ko'rsatish
       setSuccessMsg(
         `Ro'yxatdan o'tdingiz! Iltimos, ${form.email} pochtangizga kirib, tasdiqlash havolasini bosing.`,
       );
 
-      // 5 soniyadan keyin Login sahifasiga otib yuborish
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 5000);
@@ -160,7 +155,6 @@ export default function Register() {
       style={{ minHeight: "80vh" }}
     >
       <div style={{ width: "100%", maxWidth: "520px" }}>
-        {/* 🔥 Pochtaga kod jo'natilganda chiqadigan XABARNOMA */}
         {successMsg && (
           <div className="alert alert-success bg-success-subtle border-success text-success-emphasis text-center fw-bold shadow-sm rounded-4 mb-4">
             <i className="bi bi-envelope-check-fill fs-3 d-block mb-2"></i>
@@ -172,7 +166,6 @@ export default function Register() {
           </div>
         )}
 
-        {/* Agar xabar chiqmagan bo'lsa formani ko'rsatamiz */}
         {!successMsg && (
           <>
             <h3 className="fw-bold mb-4 text-center text-dark-pink">

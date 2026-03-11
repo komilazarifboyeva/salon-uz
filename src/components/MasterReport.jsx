@@ -92,7 +92,6 @@ export default function MasterReport({ user }) {
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
 
-  // 🔥 Sana tanlanganligini tekshirish
   const isDateSelected = fromDate !== "" || toDate !== "";
 
   return (
@@ -139,7 +138,6 @@ export default function MasterReport({ user }) {
         </div>
       </div>
 
-      {/* 🔥 Agar sana tanlanmagan bo'lsa, ma'lumotlarni yashirish */}
       {!isDateSelected ? (
         <div className="text-center py-5 card border-0 shadow-sm rounded-4 bg-light">
           <i className="bi bi-calendar3 fs-1 text-muted mb-3"></i>

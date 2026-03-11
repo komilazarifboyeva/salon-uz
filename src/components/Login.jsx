@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth } from "../firebase/firebaseConfig";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth"; // 🔥 signOut qo'shildi
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import "./Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // 🔥 Xabarlar uchun state
+  const [errorMsg, setErrorMsg] = useState("");
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -23,9 +23,8 @@ export default function Login() {
       );
       const user = userCredential.user;
 
-      // 🔥 EMAIL TASDIQLANGANINI TEKSHIRISH
       if (!user.emailVerified) {
-        await signOut(auth); // Tasdiqlamagan bo'lsa, tizimdan darhol chiqaramiz
+        await signOut(auth); 
         setErrorMsg(
           "Iltimos, avval emailingizni tasdiqlang! Pochtangizga (Spam papkasiga ham qarang) xat yuborilgan.",
         );
@@ -56,7 +55,6 @@ export default function Login() {
       style={{ minHeight: "80vh" }}
     >
       <div style={{ width: "100%", maxWidth: "450px" }}>
-        {/* 🔥 Xatolik haqida chiroyli xabar bloki */}
         {errorMsg && (
           <div className="alert alert-danger bg-danger-subtle border-danger text-danger-emphasis d-flex align-items-center shadow-sm rounded-4 mb-4">
             <i className="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
