@@ -206,7 +206,6 @@ export default function App() {
                   </>
                 )}
 
-                {/* 🔥 Master hisoboti uchun yopiq yo'nalish */}
                 <Route
                   path="/master-report"
                   element={
