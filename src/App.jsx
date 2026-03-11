@@ -14,6 +14,8 @@ import Register from "./components/Register";
 import Navbat from "./components/Navbat";
 import ClientDashboard from "./components/ClientDashboard";
 import MasterDashboard from "./components/MasterDashboard";
+import MasterReport from "./components/MasterReport";
+import MasterServices from "./components/MasterServices"; 
 import ProtectedRoute from "./ProtectedRoute";
 
 import "./App.css";
@@ -79,19 +81,13 @@ export default function App() {
         <div className="nav-menu">
           {user ? (
             <>
-
               <NavLink className={getNavLinkClass} to="/navbat">
                 <i className="bi bi-clock"></i>{" "}
                 <span className="nav-text">Navbat</span>
               </NavLink>
 
-
               {isAdmin && (
                 <>
-                  <NavLink className={getNavLinkClass} to="/" end>
-                    <i className="bi bi-person-plus"></i>{" "}
-                    <span className="nav-text">Mijoz qo'shish</span>
-                  </NavLink>
                   <NavLink className={getNavLinkClass} to="/clients">
                     <i className="bi bi-people"></i>{" "}
                     <span className="nav-text">Mijozlar</span>
@@ -115,10 +111,24 @@ export default function App() {
               )}
 
               {isMaster && (
-                <NavLink className={getNavLinkClass} to="/" end>
-                  <i className="bi bi-scissors"></i>{" "}
-                  <span className="nav-text">Mijozlar</span>
-                </NavLink>
+                <>
+                  <NavLink className={getNavLinkClass} to="/" end>
+                    <i className="bi bi-scissors"></i>{" "}
+                    <span className="nav-text">Mijozlar</span>
+                  </NavLink>
+                  <NavLink className={getNavLinkClass} to="/master-add-client">
+                    <i className="bi bi-person-plus"></i>{" "}
+                    <span className="nav-text">Mijoz qo'shish</span>
+                  </NavLink>
+                  <NavLink className={getNavLinkClass} to="/master-services">
+                    <i className="bi bi-scissors"></i>{" "}
+                    <span className="nav-text">Xizmatlar</span>
+                  </NavLink>
+                  <NavLink className={getNavLinkClass} to="/master-report">
+                    <i className="bi bi-graph-up-arrow"></i>{" "}
+                    <span className="nav-text">Hisobot</span>
+                  </NavLink>
+                </>
               )}
 
               <NavLink className={getNavLinkClass} to="/cabinet">
@@ -149,7 +159,6 @@ export default function App() {
         <div className="row justify-content-center">
           <div className="col-12 col-lg-11 shadow-sm rounded-4 bg-white p-3 p-md-4">
             <Routes>
-          
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/navbat" element={<Navbat user={user} />} />
@@ -163,11 +172,10 @@ export default function App() {
                     ) : isClient ? (
                       <ClientDashboard user={user} />
                     ) : isMaster ? (
-                      <MasterDashboard user={user} /> 
+                      <MasterDashboard user={user} />
                     ) : null
                   }
                 />
-
 
                 {isAdmin ? (
                   <>
@@ -197,6 +205,38 @@ export default function App() {
                     />
                   </>
                 )}
+
+                {/* 🔥 Master hisoboti uchun yopiq yo'nalish */}
+                <Route
+                  path="/master-report"
+                  element={
+                    isMaster ? (
+                      <MasterReport user={user} />
+                    ) : (
+                      <Navigate to="/" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/master-services"
+                  element={
+                    isMaster ? (
+                      <MasterServices user={user} />
+                    ) : (
+                      <Navigate to="/" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/master-add-client"
+                  element={
+                    isMaster ? (
+                      <AddClient user={user} />
+                    ) : (
+                      <Navigate to="/" replace />
+                    )
+                  }
+                />
 
                 <Route path="/cabinet" element={<Cabinet user={user} />} />
               </Route>

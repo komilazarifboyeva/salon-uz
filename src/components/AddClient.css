@@ -1,7 +1,9 @@
 .text-dark-pink {
   color: rgb(214, 51, 132);
 }
-
+.bg-pink{
+  background-color: #d63384;
+}
 .bg-pink-soft {
   background-color: rgb(255, 238, 246);
 }
