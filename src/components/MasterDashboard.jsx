@@ -9,6 +9,63 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+let audioCtx = null;
+
+const unlockAudioSilently = () => {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0; 
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.1);
+  } catch (e) {
+    console.error("Audio unlock error:", e);
+  }
+};
+
+const playNotificationSound = () => {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+
+    const playTone = (frequency, startTime, duration) => {
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc.type = "sine"; 
+      osc.frequency.setValueAtTime(frequency, startTime);
+
+      gainNode.gain.setValueAtTime(0.3, startTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = audioCtx.currentTime;
+
+    playTone(783.99, now, 0.4);
+    playTone(1046.5, now + 0.15, 0.8); 
+  } catch (e) {
+    console.error("Web Audio API ishlamadi:", e);
+  }
+};
+
 export default function MasterDashboard({ user }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +74,7 @@ export default function MasterDashboard({ user }) {
   const [audioAllowed, setAudioAllowed] = useState(false);
 
   const isFirstLoad = useRef(true);
+  const audioAllowedRef = useRef(false);
 
   const getTashkentDateString = (dateInput) => {
     if (!dateInput) return "";
@@ -30,6 +88,14 @@ export default function MasterDashboard({ user }) {
   };
 
   const bugunStr = getTashkentDateString(new Date());
+
+  useEffect(() => {
+    const isAllowed = sessionStorage.getItem("audioPermission") === "true";
+    if (isAllowed) {
+      setAudioAllowed(true);
+      audioAllowedRef.current = true;
+    }
+  }, []);
 
   useEffect(() => {
     if (!user || !user.salonId || !user.name) return;
@@ -47,12 +113,9 @@ export default function MasterDashboard({ user }) {
         const hasNewClient = snapshot
           .docChanges()
           .some((change) => change.type === "added");
-        if (hasNewClient && audioAllowed) {
-          const audio = new Audio("/notification.mp3");
-          audio
-            .play()
-            .catch((e) => console.log("Brauzer avtomatik ovozni to'sdi:", e));
 
+        if (hasNewClient && audioAllowedRef.current) {
+          playNotificationSound();
           setShowAlert(true);
 
           setTimeout(() => {
@@ -62,7 +125,6 @@ export default function MasterDashboard({ user }) {
       }
 
       let apps = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
       apps.sort(
         (a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate),
       );
@@ -75,25 +137,11 @@ export default function MasterDashboard({ user }) {
   }, [user]);
 
   const handleEnableAudio = () => {
-    const audio = new Audio("/notification.mp3");
-    audio
-      .play()
-      .then(() => {
-        audio.pause();
-        setAudioAllowed(true);
-
-        localStorage.setItem("audioPermission", "true");
-      })
-      .catch((err) => {
-        console.error("Ovoz faollashmadi:", err);
-      });
+    unlockAudioSilently();
+    setAudioAllowed(true);
+    audioAllowedRef.current = true;
+    sessionStorage.setItem("audioPermission", "true");
   };
-
-  useEffect(() => {
-    if (localStorage.getItem("audioPermission") === "true") {
-      setAudioAllowed(true);
-    }
-  }, []);
 
   const updateStatus = async (id, newStatus) => {
     try {
@@ -112,61 +160,89 @@ export default function MasterDashboard({ user }) {
   const tugatilganlar = bugungiAppointments.filter(
     (a) => a.status === "tugagan",
   ).length;
-
   const bugungiDaromad = bugungiAppointments
     .filter((a) => a.status === "tugagan")
     .reduce((sum, a) => sum + Number(a.price || 0), 0);
 
   if (loading) {
-    return <div className="text-center py-5">Yuklanmoqda...</div>;
+    return (
+      <div className="text-center py-5 text-pink">
+        <div className="spinner-border"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="relative">
+    <>
+      {showAlert && (
+        <div
+          className="alert bg-pink text-white border-0 shadow-lg rounded-4 position-fixed d-flex align-items-center"
+          style={{
+            top: "30px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 9999999,
+            minWidth: "340px",
+            animation: "shake 0.5s ease-in-out",
+          }}
+          role="alert"
+        >
+          <div
+            className="bg-white text-pink rounded-circle d-flex justify-content-center align-items-center me-3"
+            style={{ width: "40px", height: "40px" }}
+          >
+            <i className="bi bi-bell-fill fs-5"></i>
+          </div>
+          <div className="flex-grow-1">
+            <strong className="d-block mb-1 fs-6">Yangi buyurtma!</strong>
+            <span className="small opacity-75">Sizga yangi mijoz yozildi.</span>
+          </div>
+          <button
+            type="button"
+            className="btn-close btn-close-white ms-3"
+            onClick={() => setShowAlert(false)}
+          ></button>
+        </div>
+      )}
+
       {!audioAllowed && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-white p-8 rounded-2xl text-center shadow-2xl max-w-md mx-4">
-            <div className="text-5xl mb-4">🔔</div>
-            <h2 className="text-xl font-bold mb-2">
-              Bildirishnomalarni yoqing
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Yangi mijozlar haqida ovozli xabar olish uchun quyidagi tugmani
-              bosing.
-            </p>
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(10px)",
+            zIndex: 9999998,
+          }}
+        >
+          <div
+            className="card border-0 shadow-lg rounded-4 p-4 text-center m-3 animate-fade-in"
+            style={{ maxWidth: "420px", backgroundColor: "#fff" }}
+          >
+            <div
+              className="bg-pink-soft rounded-circle d-inline-flex justify-content-center align-items-center mx-auto mb-4"
+              style={{ width: "80px", height: "80px" }}
+            >
+              <i
+                className="bi bi-bell-fill text-pink"
+                style={{ fontSize: "2.5rem" }}
+              ></i>
+            </div>
+            <h4 className="fw-bold text-dark-pink mb-3">
+              Dashboardni faollashtiring
+            </h4>
             <button
               onClick={handleEnableAudio}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all"
+              className="btn btn-pink w-100 py-3 fw-bold rounded-pill shadow-sm fs-6"
             >
-              Dashboardni faollashtirish
+              <i className="bi bi-check2-circle me-2 fs-5"></i>Dashboardni
+              faollashtirish
             </button>
           </div>
         </div>
       )}
 
-      <div className={!audioAllowed ? "blur-md pointer-events-none" : ""}>
+      <div className={!audioAllowed ? "opacity-25 pe-none" : "animate-fade-in"}>
         <div className="container py-3 position-relative">
-          {showAlert && (
-            <div
-              className="alert bg-pink-soft border border-pink text-dark-pink d-flex align-items-center shadow-sm rounded-4 position-sticky top-0 z-3 mb-4 transition-all"
-              role="alert"
-            >
-              <i className="bi bi-bell-fill fs-4 me-3 text-pink animation-shake"></i>
-              <div>
-                <h5 className="alert-heading fw-bold mb-1">Yangi buyurtma!</h5>
-                <p className="mb-0 small">
-                  Sizga yangi mijoz yozildi. Ro'yxatni tekshiring.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-close ms-auto"
-                onClick={() => setShowAlert(false)}
-                aria-label="Close"
-              ></button>
-            </div>
-          )}
-
           <div className="d-flex align-items-center mb-4 border-bottom pb-2">
             <div className="bg-pink-soft p-2 rounded-3 me-3">
               <i className="bi bi-scissors text-pink fs-3"></i>
@@ -292,6 +368,6 @@ export default function MasterDashboard({ user }) {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
