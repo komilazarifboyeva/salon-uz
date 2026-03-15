@@ -7,6 +7,7 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 let audioCtx = null;
@@ -21,7 +22,7 @@ const unlockAudioSilently = () => {
     }
     const osc = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0; 
+    gainNode.gain.value = 0;
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     osc.start();
@@ -44,7 +45,7 @@ const playNotificationSound = () => {
       const osc = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
 
-      osc.type = "sine"; 
+      osc.type = "sine";
       osc.frequency.setValueAtTime(frequency, startTime);
 
       gainNode.gain.setValueAtTime(0.3, startTime);
@@ -60,7 +61,7 @@ const playNotificationSound = () => {
     const now = audioCtx.currentTime;
 
     playTone(783.99, now, 0.4);
-    playTone(1046.5, now + 0.15, 0.8); 
+    playTone(1046.5, now + 0.15, 0.8);
   } catch (e) {
     console.error("Web Audio API ishlamadi:", e);
   }
@@ -69,6 +70,9 @@ const playNotificationSound = () => {
 export default function MasterDashboard({ user }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [editingApp, setEditingApp] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [showAlert, setShowAlert] = useState(false);
   const [audioAllowed, setAudioAllowed] = useState(false);
@@ -85,6 +89,15 @@ export default function MasterDashboard({ user }) {
       month: "2-digit",
       day: "2-digit",
     }).format(date);
+  };
+
+  const formatForInput = (dateInput) => {
+    if (!dateInput) return "";
+    const d = dateInput.seconds ? dateInput.toDate() : new Date(dateInput);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+      d.getDate(),
+    )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
   const bugunStr = getTashkentDateString(new Date());
@@ -153,6 +166,43 @@ export default function MasterDashboard({ user }) {
     }
   };
 
+  const saveEditApp = async () => {
+    try {
+      const clientRef = doc(db, "clients", editingApp.id);
+      await updateDoc(clientRef, {
+        name: editingApp.name,
+        phone: editingApp.phone,
+        service: editingApp.service,
+        price: Number(editingApp.price),
+        appointmentDate: editingApp.appointmentDate,
+      });
+      setIsModalOpen(false); 
+      setEditingApp(null);
+    } catch (error) {
+      console.error("Yangilashda xatolik:", error);
+      alert("Yangilashda xatolik yuz berdi!");
+    }
+  };
+
+  const handleDeleteApp = async (id) => {
+    if (window.confirm("Haqiqatan ham bu mijozni o'chirmoqchimisiz?")) {
+      try {
+        await deleteDoc(doc(db, "clients", id));
+      } catch (error) {
+        console.error("O'chirishda xatolik:", error);
+        alert("O'chirishda xatolik yuz berdi!");
+      }
+    }
+  };
+
+  const handleEditClick = (app) => {
+    setEditingApp({
+      ...app,
+      appointmentDate: formatForInput(app.appointmentDate),
+    });
+    setIsModalOpen(true);
+  };
+
   const bugungiAppointments = appointments.filter((a) => {
     return getTashkentDateString(a.appointmentDate) === bugunStr;
   });
@@ -174,6 +224,125 @@ export default function MasterDashboard({ user }) {
 
   return (
     <>
+      {isModalOpen && editingApp && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(4px)",
+            zIndex: 9999999,
+          }}
+        >
+          <div
+            className="card border-0 shadow-lg rounded-4 p-4 animate-fade-in w-100"
+            style={{ maxWidth: "500px", margin: "0 15px" }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+              <h5 className="fw-bold text-dark m-0">
+                <i className="bi bi-pencil-square text-pink me-2"></i>
+                Mijozni tahrirlash
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setIsModalOpen(false)}
+              ></button>
+            </div>
+
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <div className="form-floating">
+                  <input
+                    type="text"
+                    className="form-control custom-inputs"
+                    id="editName"
+                    value={editingApp.name}
+                    onChange={(e) =>
+                      setEditingApp({ ...editingApp, name: e.target.value })
+                    }
+                  />
+                  <label htmlFor="editName">Ismi</label>
+                </div>
+              </div>
+              <div className="col-12 col-md-6">
+                <div className="form-floating">
+                  <input
+                    type="text"
+                    className="form-control custom-inputs"
+                    id="editPhone"
+                    value={editingApp.phone}
+                    onChange={(e) =>
+                      setEditingApp({ ...editingApp, phone: e.target.value })
+                    }
+                  />
+                  <label htmlFor="editPhone">Telefon</label>
+                </div>
+              </div>
+              <div className="col-12">
+                <div className="form-floating">
+                  <input
+                    type="text"
+                    className="form-control custom-inputs"
+                    id="editService"
+                    value={editingApp.service}
+                    onChange={(e) =>
+                      setEditingApp({ ...editingApp, service: e.target.value })
+                    }
+                  />
+                  <label htmlFor="editService">Xizmat turi</label>
+                </div>
+              </div>
+              <div className="col-12 col-md-6">
+                <div className="form-floating">
+                  <input
+                    type="number"
+                    className="form-control custom-inputs"
+                    id="editPrice"
+                    value={editingApp.price}
+                    onChange={(e) =>
+                      setEditingApp({ ...editingApp, price: e.target.value })
+                    }
+                  />
+                  <label htmlFor="editPrice">Narxi (so'm)</label>
+                </div>
+              </div>
+              <div className="col-12 col-md-6">
+                <div className="form-floating">
+                  <input
+                    type="datetime-local"
+                    className="form-control custom-inputs"
+                    id="editDate"
+                    value={editingApp.appointmentDate}
+                    onChange={(e) =>
+                      setEditingApp({
+                        ...editingApp,
+                        appointmentDate: e.target.value,
+                      })
+                    }
+                  />
+                  <label htmlFor="editDate">Kelish vaqti</label>
+                </div>
+              </div>
+
+              <div className="col-12 mt-4 d-flex gap-2">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="btn btn-outline-secondary w-50 py-2 fw-bold rounded-4"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  onClick={saveEditApp}
+                  className="btn btn-pink w-50 py-2 fw-bold shadow-sm rounded-4"
+                >
+                  Saqlash
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAlert && (
         <div
           className="alert bg-pink text-white border-0 shadow-lg rounded-4 position-fixed d-flex align-items-center"
@@ -181,7 +350,7 @@ export default function MasterDashboard({ user }) {
             top: "30px",
             left: "50%",
             transform: "translateX(-50%)",
-            zIndex: 9999999,
+            zIndex: 999999,
             minWidth: "340px",
             animation: "shake 0.5s ease-in-out",
           }}
@@ -334,31 +503,60 @@ export default function MasterDashboard({ user }) {
                         </div>
                       </div>
 
-                      <div className="col-12 col-md-4 text-md-end">
-                        {app.status === "kelmoqda" && (
+                      <div className="col-12 col-md-4 text-md-end d-flex flex-column align-items-md-end gap-2">
+                        <div className="d-flex gap-2 justify-content-end mb-2 w-100">
                           <button
-                            onClick={() => updateStatus(app.id, "jarayonda")}
-                            className="btn btn-primary fw-bold rounded-pill px-4 shadow-sm w-100"
+                            onClick={() => handleEditClick(app)}
+                            className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center rounded-circle"
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              padding: 0,
+                            }}
+                            title="Tahrirlash"
                           >
-                            Boshlash <i className="bi bi-play-fill"></i>
+                            <i className="bi bi-pencil"></i>
                           </button>
-                        )}
-
-                        {app.status === "jarayonda" && (
                           <button
-                            onClick={() => updateStatus(app.id, "tugagan")}
-                            className="btn btn-success fw-bold rounded-pill px-4 shadow-sm w-100"
+                            onClick={() => handleDeleteApp(app.id)}
+                            className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center rounded-circle"
+                            style={{
+                              width: "32px",
+                              height: "32px",
+                              padding: 0,
+                            }}
+                            title="O'chirish"
                           >
-                            Tugatish <i className="bi bi-check2-all"></i>
+                            <i className="bi bi-trash"></i>
                           </button>
-                        )}
+                        </div>
 
-                        {app.status === "tugagan" && (
-                          <span className="badge bg-success-soft text-success px-4 py-2 rounded-pill border border-success w-100 d-inline-block">
-                            Yakunlangan{" "}
-                            <i className="bi bi-check-circle-fill ms-1"></i>
-                          </span>
-                        )}
+                        <div className="w-100">
+                          {app.status === "kelmoqda" && (
+                            <button
+                              onClick={() => updateStatus(app.id, "jarayonda")}
+                              className="btn btn-primary fw-bold rounded-pill px-4 shadow-sm w-100"
+                            >
+                              Boshlash <i className="bi bi-play-fill"></i>
+                            </button>
+                          )}
+
+                          {app.status === "jarayonda" && (
+                            <button
+                              onClick={() => updateStatus(app.id, "tugagan")}
+                              className="btn btn-success fw-bold rounded-pill px-4 shadow-sm w-100"
+                            >
+                              Tugatish <i className="bi bi-check2-all"></i>
+                            </button>
+                          )}
+
+                          {app.status === "tugagan" && (
+                            <span className="badge bg-success-soft text-success px-4 py-2 rounded-pill border border-success w-100 d-inline-block">
+                              Yakunlangan{" "}
+                              <i className="bi bi-check-circle-fill ms-1"></i>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

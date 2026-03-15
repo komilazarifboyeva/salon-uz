@@ -8,6 +8,9 @@ import {
   where,
   serverTimestamp,
   getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 export default function ClientDashboard({ user }) {
@@ -15,6 +18,7 @@ export default function ClientDashboard({ user }) {
   const [masters, setMasters] = useState([]);
   const [services, setServices] = useState([]);
   const [myAppointments, setMyAppointments] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const [booking, setBooking] = useState({
     salonId: "",
@@ -26,6 +30,14 @@ export default function ClientDashboard({ user }) {
   });
 
   const [loading, setLoading] = useState(false);
+  const [alertMsg, setAlertMsg] = useState({ show: false, text: "", type: "" });
+
+  const showAlert = (text, type = "success") => {
+    setAlertMsg({ show: true, text, type });
+    setTimeout(() => {
+      setAlertMsg({ show: false, text: "", type: "" });
+    }, 5000);
+  };
 
   useEffect(() => {
     const unsubSalons = onSnapshot(collection(db, "salons"), (snapshot) => {
@@ -138,8 +150,10 @@ export default function ClientDashboard({ user }) {
       const newAppTime = new Date(booking.appointmentDate).getTime();
       const newAppEndTime = newAppTime + booking.duration * 60000;
 
-      checkSnap.forEach((doc) => {
-        const data = doc.data();
+      checkSnap.forEach((docSnap) => {
+        if (editingId && docSnap.id === editingId) return;
+
+        const data = docSnap.data();
         if (data.status === "tugagan" || data.status === "bekor qilingan")
           return;
 
@@ -152,27 +166,42 @@ export default function ClientDashboard({ user }) {
       });
 
       if (isConflict) {
-        alert(
-          "❌ Kechirasiz! Bu vaqtda master band. Iltimos, boshqa vaqtni tanlang.",
+        showAlert(
+          "Kechirasiz! Bu vaqtda master band. Iltimos, boshqa vaqtni tanlang.",
+          "danger",
         );
         setLoading(false);
         return;
       }
-      await addDoc(collection(db, "clients"), {
-        clientId: user.uid,
-        name: user.name || "Mijoz",
-        phone: user.phone || "",
-        salonId: booking.salonId,
-        masterName: booking.masterName,
-        service: booking.service,
-        price: Number(booking.price),
-        duration: Number(booking.duration),
-        appointmentDate: booking.appointmentDate,
-        status: "kelmoqda",
-        createdAt: serverTimestamp(),
-      });
 
-      alert("Navbatga muvaffaqiyatli yozildingiz! 🎉");
+      if (editingId) {
+        await updateDoc(doc(db, "clients", editingId), {
+          salonId: booking.salonId,
+          masterName: booking.masterName,
+          service: booking.service,
+          price: Number(booking.price),
+          duration: Number(booking.duration),
+          appointmentDate: booking.appointmentDate,
+        });
+        showAlert("Navbat muvaffaqiyatli yangilandi!", "success");
+        setEditingId(null);
+      } else {
+        await addDoc(collection(db, "clients"), {
+          clientId: user.uid,
+          name: user.name || "Mijoz",
+          phone: user.phone || "",
+          salonId: booking.salonId,
+          masterName: booking.masterName,
+          service: booking.service,
+          price: Number(booking.price),
+          duration: Number(booking.duration),
+          appointmentDate: booking.appointmentDate,
+          status: "kelmoqda",
+          createdAt: serverTimestamp(),
+        });
+        showAlert("Navbatga muvaffaqiyatli yozildingiz!", "success");
+      }
+
       setBooking({
         ...booking,
         masterName: "",
@@ -183,10 +212,57 @@ export default function ClientDashboard({ user }) {
       });
     } catch (err) {
       console.error("Yozilishda xatolik:", err);
-      alert("Xatolik yuz berdi. Internetni tekshiring.");
+      showAlert("Xatolik yuz berdi. Internetni tekshiring.", "danger");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditClick = (app) => {
+    setEditingId(app.id);
+    setBooking({
+      salonId: app.salonId,
+      masterName: app.masterName,
+      service: app.service,
+      appointmentDate: app.appointmentDate,
+      price: app.price,
+      duration: app.duration,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelApp = async (id) => {
+    if (window.confirm("Haqiqatan ham bu navbatni bekor qilmoqchimisiz?")) {
+      try {
+        await deleteDoc(doc(db, "clients", id));
+        showAlert("Navbat bekor qilindi", "success");
+        if (editingId === id) {
+          setEditingId(null);
+          setBooking({
+            ...booking,
+            masterName: "",
+            service: "",
+            appointmentDate: "",
+            price: 0,
+            duration: 0,
+          });
+        }
+      } catch (error) {
+        showAlert("Xatolik yuz berdi", "danger");
+      }
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setBooking({
+      ...booking,
+      masterName: "",
+      service: "",
+      appointmentDate: "",
+      price: 0,
+      duration: 0,
+    });
   };
 
   const qolganVaqt = (time, status) => {
@@ -205,8 +281,42 @@ export default function ClientDashboard({ user }) {
     return `${mins} daqiqa qoldi`;
   };
 
+  const getSalonDetails = (salonId) => {
+    const salon = salons.find((s) => s.id === salonId);
+    return (
+      salon || {
+        salonName: "Noma'lum salon",
+        salonLocation: "Manzil kiritilmagan",
+      }
+    );
+  };
+
   return (
-    <div className="container py-2">
+    <div className="container py-2 position-relative">
+      {alertMsg.show && (
+        <div
+          className="position-fixed top-0 start-50 translate-middle-x mt-4"
+          style={{
+            transition: "0.3s",
+            zIndex: 10000,
+            width: "90%",
+            maxWidth: "450px",
+          }}
+        >
+          <div
+            className="alert shadow-lg rounded-4 d-flex align-items-center px-4 py-3 border-0 text-white"
+            style={{ backgroundColor: "#d63384" }}
+          >
+            <span className="fw-bold">{alertMsg.text}</span>
+            <button
+              type="button"
+              className="btn-close btn-close-white ms-auto"
+              onClick={() => setAlertMsg({ show: false, text: "", type: "" })}
+            ></button>
+          </div>
+        </div>
+      )}
+
       <div className="d-flex align-items-center mb-4 border-bottom pb-2">
         <div className="bg-pink-soft p-2 rounded-3 me-3">
           <i className="bi bi-calendar2-heart text-pink fs-3"></i>
@@ -225,29 +335,51 @@ export default function ClientDashboard({ user }) {
         <div className="col-12 col-lg-5">
           <form
             onSubmit={handleSubmit}
-            className="card p-4 shadow-sm border-0 rounded-4 bg-white"
+            className={`card p-4 shadow-sm border-0 rounded-4 bg-white ${editingId ? "border border-pink shadow" : ""}`}
           >
-            <h5 className="fw-bold mb-4 text-dark">
-              <i className="bi bi-pencil-square me-2 text-pink"></i>Yangi navbat
-              olish
-            </h5>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h5 className="fw-bold text-dark m-0">
+                <i className="bi bi-pencil-square me-2 text-pink"></i>
+                {editingId ? "Navbatni tahrirlash" : "Yangi navbat olish"}
+              </h5>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="btn btn-sm btn-outline-secondary rounded-pill"
+                >
+                  Bekor qilish
+                </button>
+              )}
+            </div>
 
-            <div className="form-floating mb-3">
-              <select
-                className="form-select custom-inputs"
-                id="salonSelect"
-                value={booking.salonId}
-                onChange={handleSalonChange}
-                required
-              >
-                <option value="">Salonni tanlang</option>
-                {salons.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.salonName}
-                  </option>
-                ))}
-              </select>
-              <label htmlFor="salonSelect">Salon</label>
+            <div className="mb-3">
+              <div className="form-floating">
+                <select
+                  className="form-select custom-inputs"
+                  id="salonSelect"
+                  value={booking.salonId}
+                  onChange={handleSalonChange}
+                  required
+                >
+                  <option value="">Salonni tanlang</option>
+                  {salons.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.salonName}
+                    </option>
+                  ))}
+                </select>
+                <label htmlFor="salonSelect">Salon</label>
+              </div>
+              {booking.salonId && (
+                <div className="text-muted small mt-2 px-2 animate-fade-in">
+                  <i className="bi bi-geo-alt-fill text-danger me-1"></i>
+                  Manzil:{" "}
+                  <span className="fw-medium text-dark">
+                    {getSalonDetails(booking.salonId).salonLocation}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="form-floating mb-3">
@@ -338,7 +470,11 @@ export default function ClientDashboard({ user }) {
               className="btn btn-pink w-100 py-3 fw-bold rounded-4 shadow-sm"
               disabled={loading || !booking.service}
             >
-              {loading ? "Band qilinmoqda..." : "Yozilish"}
+              {loading
+                ? "Kuting..."
+                : editingId
+                  ? "O'zgarishlarni saqlash"
+                  : "Yozilish"}
             </button>
           </form>
         </div>
@@ -366,100 +502,141 @@ export default function ClientDashboard({ user }) {
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
-                  {myAppointments.map((app) => (
-                    <div
-                      key={app.id}
-                      className="list-group-item p-4 border-bottom hover-bg-light"
-                    >
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                          <h6 className="fw-bold mb-1 text-dark">
-                            {app.service}
-                          </h6>
-                          <div className="text-muted small">
-                            <i className="bi bi-shop me-1 text-pink"></i> Salon
-                            ID: {app.salonId.substring(0, 6)}...
-                          </div>
-                        </div>
-                        <span
-                          className={`badge rounded-pill ${
-                            app.status === "kelmoqda"
-                              ? "bg-primary-soft text-primary border border-primary"
-                              : app.status === "jarayonda"
-                                ? "bg-pink-soft text-pink border border-pink"
-                                : "bg-success-soft text-success border border-success"
-                          }`}
-                        >
-                          {app.status}
-                        </span>
-                      </div>
+                  {myAppointments.map((app) => {
+                    const currentSalon = getSalonDetails(app.salonId);
 
-                      <div className="row g-2 mt-3">
-                        <div className="col-6 col-sm-4">
-                          <div className="d-flex align-items-center">
-                            <div className="bg-light rounded p-2 me-2">
-                              <i className="bi bi-person-badge text-secondary"></i>
+                    return (
+                      <div
+                        key={app.id}
+                        className={`list-group-item p-4 border-bottom hover-bg-light ${editingId === app.id ? "bg-pink-soft" : ""}`}
+                      >
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div>
+                            <h6 className="fw-bold mb-1 text-dark">
+                              {app.service}
+                            </h6>
+
+                            <div className="text-dark fw-medium small mt-2">
+                              <i className="bi bi-shop me-1 text-pink"></i>{" "}
+                              {currentSalon.salonName}
                             </div>
-                            <div>
-                              <small
-                                className="d-block text-muted"
-                                style={{ fontSize: "0.75rem" }}
-                              >
-                                Master
-                              </small>
-                              <span className="fw-semibold text-dark small">
-                                {app.masterName}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-6 col-sm-4">
-                          <div className="d-flex align-items-center">
-                            <div className="bg-light rounded p-2 me-2">
-                              <i className="bi bi-calendar-check text-secondary"></i>
-                            </div>
-                            <div>
-                              <small
-                                className="d-block text-muted"
-                                style={{ fontSize: "0.75rem" }}
-                              >
-                                Vaqt
-                              </small>
-                              <span className="fw-semibold text-dark small">
-                                {new Date(app.appointmentDate).toLocaleString(
-                                  "uz-UZ",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  },
-                                )}
-                              </span>
+                            <div className="text-muted small mt-1">
+                              <i className="bi bi-geo-alt-fill me-1 text-danger"></i>{" "}
+                              {currentSalon.salonLocation}
                             </div>
                           </div>
+
+                          <div className="d-flex align-items-center gap-2">
+                            <span
+                              className={`badge rounded-pill ${
+                                app.status === "kelmoqda"
+                                  ? "bg-primary-soft text-primary border border-primary"
+                                  : app.status === "jarayonda"
+                                    ? "bg-pink-soft text-pink border border-pink"
+                                    : "bg-success-soft text-success border border-success"
+                              }`}
+                            >
+                              {app.status}
+                            </span>
+
+                            {app.status === "kelmoqda" && (
+                              <div className="d-flex gap-1">
+                                <button
+                                  onClick={() => handleEditClick(app)}
+                                  className="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center rounded-circle"
+                                  style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    padding: 0,
+                                  }}
+                                  title="Tahrirlash"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+                                <button
+                                  onClick={() => handleCancelApp(app.id)}
+                                  className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center rounded-circle"
+                                  style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    padding: 0,
+                                  }}
+                                  title="Bekor qilish"
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="col-12 col-sm-4 mt-2 mt-sm-0">
-                          <div className="d-flex align-items-center">
-                            <div className="bg-pink-soft rounded p-2 me-2">
-                              <i className="bi bi-hourglass-split text-pink"></i>
+
+                        <div className="row g-2 mt-3">
+                          <div className="col-6 col-sm-4">
+                            <div className="d-flex align-items-center">
+                              <div className="bg-light rounded p-2 me-2">
+                                <i className="bi bi-person-badge text-secondary"></i>
+                              </div>
+                              <div>
+                                <small
+                                  className="d-block text-muted"
+                                  style={{ fontSize: "0.75rem" }}
+                                >
+                                  Master
+                                </small>
+                                <span className="fw-semibold text-dark small">
+                                  {app.masterName}
+                                </span>
+                              </div>
                             </div>
-                            <div>
-                              <small
-                                className="d-block text-pink fw-bold"
-                                style={{ fontSize: "0.75rem" }}
-                              >
-                                Holat
-                              </small>
-                              <span className="fw-bold text-dark small">
-                                {qolganVaqt(app.appointmentDate, app.status)}
-                              </span>
+                          </div>
+                          <div className="col-6 col-sm-4">
+                            <div className="d-flex align-items-center">
+                              <div className="bg-light rounded p-2 me-2">
+                                <i className="bi bi-calendar-check text-secondary"></i>
+                              </div>
+                              <div>
+                                <small
+                                  className="d-block text-muted"
+                                  style={{ fontSize: "0.75rem" }}
+                                >
+                                  Vaqt
+                                </small>
+                                <span className="fw-semibold text-dark small">
+                                  {new Date(app.appointmentDate).toLocaleString(
+                                    "uz-UZ",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="col-12 col-sm-4 mt-2 mt-sm-0">
+                            <div className="d-flex align-items-center">
+                              <div className="bg-pink-soft rounded p-2 me-2">
+                                <i className="bi bi-hourglass-split text-pink"></i>
+                              </div>
+                              <div>
+                                <small
+                                  className="d-block text-pink fw-bold"
+                                  style={{ fontSize: "0.75rem" }}
+                                >
+                                  Holat
+                                </small>
+                                <span className="fw-bold text-dark small">
+                                  {qolganVaqt(app.appointmentDate, app.status)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

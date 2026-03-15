@@ -20,12 +20,14 @@ export default function Register() {
   const navigate = useNavigate();
   const [role, setRole] = useState("client");
   const [loading, setLoading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState(""); 
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [form, setForm] = useState({
     email: "",
     password: "",
     salonName: "",
+    salonLocation: "",
     ownerName: "",
     clientName: "",
     clientPhone: "",
@@ -43,13 +45,14 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     setSuccessMsg("");
+    setErrorMsg("");
 
     try {
       const finalSalonId = form.selectedSalonId.trim();
 
       if (role === "master") {
         if (!finalSalonId) {
-          alert("❌ Iltimos, Salon ID sini kiriting!");
+          setErrorMsg("Iltimos, Salon ID sini kiriting!");
           setLoading(false);
           return;
         }
@@ -58,16 +61,16 @@ export default function Register() {
           const salonSnap = await getDoc(salonRef);
 
           if (!salonSnap.exists()) {
-            alert(
-              "❌ Xato: Bunday Salon ID mavjud emas! Admindan to'g'ri ID ni so'rang.",
+            setErrorMsg(
+              "Xato: Bunday Salon ID mavjud emas! Admindan to'g'ri ID ni so'rang.",
             );
             setLoading(false);
             return;
           }
         } catch (ruleErr) {
           console.error("Firebase Rules Error:", ruleErr);
-          alert(
-            "❌ Baza bilan bog'lanishda xatolik! Firebase Console -> Firestore -> Rules bo'limida 'allow read: if true;' qilinganini tekshiring.",
+          setErrorMsg(
+            "Baza bilan bog'lanishda xatolik! Firebase Console -> Firestore -> Rules bo'limida 'allow read: if true;' qilinganini tekshiring.",
           );
           setLoading(false);
           return;
@@ -84,6 +87,7 @@ export default function Register() {
       if (role === "admin") {
         const salonRef = await addDoc(collection(db, "salons"), {
           salonName: form.salonName,
+          salonLocation: form.salonLocation,
           createdAt: serverTimestamp(),
         });
 
@@ -93,6 +97,7 @@ export default function Register() {
           email: form.email,
           role: "admin",
           salonId: salonRef.id,
+          salonLocation: form.salonLocation,
           createdAt: serverTimestamp(),
         });
       } else if (role === "master") {
@@ -126,7 +131,7 @@ export default function Register() {
       }
 
       await sendEmailVerification(user);
-      await signOut(auth); 
+      await signOut(auth);
 
       setSuccessMsg(
         `Ro'yxatdan o'tdingiz! Iltimos, ${form.email} pochtangizga kirib, tasdiqlash havolasini bosing.`,
@@ -138,11 +143,11 @@ export default function Register() {
     } catch (err) {
       console.error("Umumiy xatolik:", err);
       if (err.code === "auth/email-already-in-use") {
-        alert("Bu email allaqachon ro'yxatdan o'tgan!");
+        setErrorMsg("Bu email allaqachon ro'yxatdan o'tgan!");
       } else if (err.code === "auth/weak-password") {
-        alert("Parol juda qisqa. Kamida 6 ta belgi bo'lishi kerak.");
+        setErrorMsg("Parol juda qisqa. Kamida 6 ta belgi bo'lishi kerak.");
       } else {
-        alert("Xatolik yuz berdi: " + err.message);
+        setErrorMsg("Xatolik yuz berdi: " + err.message);
       }
     } finally {
       setLoading(false);
@@ -163,6 +168,18 @@ export default function Register() {
               className="spinner-border spinner-border-sm d-block mx-auto mt-3"
               role="status"
             ></div>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div className="alert alert-danger bg-danger-subtle border-danger text-danger-emphasis d-flex align-items-center shadow-sm rounded-4 mb-4">
+            <i className="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+            <div>{errorMsg}</div>
+            <button
+              type="button"
+              className="btn-close ms-auto"
+              onClick={() => setErrorMsg("")}
+            ></button>
           </div>
         )}
 
@@ -224,6 +241,23 @@ export default function Register() {
                   </div>
                   <div className="input-group mb-3 w-100">
                     <span className="input-group-text bg-light text-pink rounded-start-4">
+                      <i className="bi bi-geo-alt-fill fs-5"></i>
+                    </span>
+                    <div className="form-floating flex-grow-1">
+                      <input
+                        type="text"
+                        className="form-control custom-inputs rounded-end-4"
+                        id="salonLocation"
+                        value={form.salonLocation}
+                        onChange={handleChange}
+                        required
+                        placeholder="Salon manzili"
+                      />
+                      <label htmlFor="salonLocation">Salon manzili</label>
+                    </div>
+                  </div>
+                  <div className="input-group mb-3 w-100">
+                    <span className="input-group-text bg-light text-pink rounded-start-4">
                       <i className="bi bi-person-fill fs-5"></i>
                     </span>
                     <div className="form-floating flex-grow-1">
@@ -236,7 +270,7 @@ export default function Register() {
                         required
                         placeholder="Ism va familiya"
                       />
-                      <label htmlFor="ownerName">Sizning ismingiz</label>
+                      <label htmlFor="ownerName">Ism va familiya</label>
                     </div>
                   </div>
                 </>
@@ -275,7 +309,7 @@ export default function Register() {
                         required
                         placeholder="Ismingiz"
                       />
-                      <label htmlFor="masterName">Ism va Familiya</label>
+                      <label htmlFor="masterName">Ism va familiya</label>
                     </div>
                   </div>
                   <div className="input-group mb-3 w-100">
@@ -368,7 +402,7 @@ export default function Register() {
                     required
                     placeholder="Email"
                   />
-                  <label htmlFor="email">Haqiqiy Email kiriting</label>
+                  <label htmlFor="email">Email kiriting</label>
                 </div>
               </div>
               <div className="input-group mb-4 w-100">

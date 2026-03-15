@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { db } from "../firebase/firebaseConfig";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 
-export default function Navbat({ user }){
+export default function Navbat({ user }) {
   const [mijozlar, setMijozlar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hozirgiVaqt, setHozirgiVaqt] = useState(new Date());
@@ -90,7 +90,6 @@ export default function Navbat({ user }){
       return () => unsubSalons();
     }
   }, [user]);
-
 
   useEffect(() => {
     if (!selectedSalonId) {
@@ -208,6 +207,17 @@ export default function Navbat({ user }){
               </option>
             ))}
           </select>
+
+          {selectedSalonId && (
+            <div className="text-muted small mt-3 px-2 animate-fade-in">
+              <i className="bi bi-geo-alt-fill text-danger me-1"></i>
+              Manzil:{" "}
+              <span className="fw-medium text-dark">
+                {salons.find((s) => s.id === selectedSalonId)?.salonLocation ||
+                  "Kiritilmagan"}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -402,4 +412,4 @@ export default function Navbat({ user }){
       )}
     </div>
   );
-};
+}

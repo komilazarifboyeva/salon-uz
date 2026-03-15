@@ -15,12 +15,12 @@ export default function Cabinet({ user }) {
   const [salonData, setSalonData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: "",
     phone: "",
     specialty: "",
+    salonLocation: "", 
   });
   const [passForm, setPassForm] = useState({
     currentPassword: "",
@@ -47,12 +47,20 @@ export default function Cabinet({ user }) {
             name: data.name || data.ownerName || "",
             phone: data.phone || "",
             specialty: data.specialty || "",
+            salonLocation: data.salonLocation || "",
           });
         }
         if (isAdmin && user.salonId) {
           const salonRef = doc(db, "salons", user.salonId);
           const salonSnap = await getDoc(salonRef);
-          if (salonSnap.exists()) setSalonData(salonSnap.data());
+          if (salonSnap.exists()) {
+            const sData = salonSnap.data();
+            setSalonData(sData);
+            setEditForm((prev) => ({
+              ...prev,
+              salonLocation: sData.salonLocation || prev.salonLocation,
+            }));
+          }
         }
       } catch (err) {
         console.error(err);
@@ -71,15 +79,30 @@ export default function Cabinet({ user }) {
         name: editForm.name,
         phone: editForm.phone,
       };
-      if (isAdmin) updateData.ownerName = editForm.name;
+
+      if (isAdmin) {
+        updateData.ownerName = editForm.name;
+        updateData.salonLocation = editForm.salonLocation;
+
+        if (user.salonId) {
+          const salonRef = doc(db, "salons", user.salonId);
+          await updateDoc(salonRef, { salonLocation: editForm.salonLocation });
+          setSalonData((prev) => ({
+            ...prev,
+            salonLocation: editForm.salonLocation,
+          }));
+        }
+      }
+
       if (isMaster) {
         updateData.specialty = editForm.specialty;
         await updateDoc(doc(db, "masters", auth.currentUser.uid), updateData);
       }
+
       await updateDoc(userRef, updateData);
       setProfile({ ...profile, ...updateData });
       setIsEditing(false);
-      alert("Ma'lumotlar yangilandi! ✅");
+      alert("Ma'lumotlar yangilandi!");
     } catch (err) {
       alert("Xatolik: " + err.message);
     }
@@ -95,7 +118,7 @@ export default function Cabinet({ user }) {
       );
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, passForm.newPassword);
-      alert("Parol muvaffaqiyatli yangilandi! ✅");
+      alert("Parol muvaffaqiyatli yangilandi!");
       setPassForm({ currentPassword: "", newPassword: "" });
     } catch (err) {
       alert("Eski parol noto'g'ri yoki xatolik yuz berdi.");
@@ -143,7 +166,7 @@ export default function Cabinet({ user }) {
                   onClick={() => setIsEditing(false)}
                   className="btn btn-pink fw-bold rounded-pill px-3 shadow-sm"
                 >
-                  <i class="bi bi-x-lg"></i>
+                  <i className="bi bi-x-lg"></i>
                 </button>
               )}
             </div>
@@ -176,6 +199,25 @@ export default function Cabinet({ user }) {
                 />
                 <label>Telefon raqam</label>
               </div>
+
+              {isAdmin && (
+                <div className="form-floating mb-3">
+                  <input
+                    type="text"
+                    className={`form-control border-0 ${isEditing ? "bg-light" : "bg-white text-muted"}`}
+                    value={editForm.salonLocation}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        salonLocation: e.target.value,
+                      })
+                    }
+                    disabled={!isEditing}
+                    required
+                  />
+                  <label>Salon manzili</label>
+                </div>
+              )}
 
               {isMaster && (
                 <div className="form-floating mb-3">
@@ -268,7 +310,7 @@ export default function Cabinet({ user }) {
                   <h6 className="text-pink fw-bold mb-1 uppercase">
                     Salon Ma'lumotlari:
                   </h6>
-                  <h4 className="text-dark fw-bold mb-0">
+                  <h4 className="text-dark fw-bold mb-1">
                     {salonData?.salonName}{" "}
                     <span className="text-muted fs-6 ms-2 font-monospace">
                       ({user.salonId})
@@ -279,7 +321,7 @@ export default function Cabinet({ user }) {
                   className="btn btn-pink rounded-pill px-4 py-2 fw-bold shadow-sm"
                   onClick={() => {
                     navigator.clipboard.writeText(user.salonId);
-                    alert("Salon ID nusxalandi! 📋");
+                    alert("Salon ID nusxalandi!");
                   }}
                 >
                   <i className="bi bi-copy me-2"></i>ID ni nusxalash

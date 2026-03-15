@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { auth, db } from "./firebase/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-
 import AddClient from "./components/AddClient";
 import ClientsTable from "./components/ClientsTable";
 import Services from "./components/Services";
@@ -113,7 +112,7 @@ export default function App() {
               {isMaster && (
                 <>
                   <NavLink className={getNavLinkClass} to="/" end>
-                    <i className="bi bi-scissors"></i>{" "}
+                    <i className="bi bi-people"></i>{" "}
                     <span className="nav-text">Mijozlar</span>
                   </NavLink>
                   <NavLink className={getNavLinkClass} to="/master-add-client">
@@ -159,8 +158,16 @@ export default function App() {
         <div className="row justify-content-center">
           <div className="col-12 col-lg-11 shadow-sm rounded-4 bg-white p-3 p-md-4">
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route
+                path="/login"
+                element={user ? <Navigate to="/navbat" replace /> : <Login />}
+              />
+              <Route
+                path="/register"
+                element={
+                  user ? <Navigate to="/navbat" replace /> : <Register />
+                }
+              />
               <Route path="/navbat" element={<Navbat user={user} />} />
 
               <Route element={<ProtectedRoute user={user} />}>

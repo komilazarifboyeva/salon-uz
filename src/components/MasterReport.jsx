@@ -92,7 +92,7 @@ export default function MasterReport({ user }) {
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
 
-  const isDateSelected = fromDate !== "" || toDate !== "";
+  const isBothDatesSelected = fromDate !== "" && toDate !== "";
 
   return (
     <div className="container-fluid py-4">
@@ -138,10 +138,12 @@ export default function MasterReport({ user }) {
         </div>
       </div>
 
-      {!isDateSelected ? (
+      {!isBothDatesSelected ? (
         <div className="text-center py-5 card border-0 shadow-sm rounded-4 bg-light">
           <i className="bi bi-calendar3 fs-1 text-muted mb-3"></i>
-          <h5 className="text-muted">Hisobotni ko'rish uchun sana tanlang</h5>
+          <h5 className="text-muted">
+            Hisobotni ko'rish uchun ikkala sanani ham tanlang
+          </h5>
         </div>
       ) : filteredClients.length > 0 ? (
         <>

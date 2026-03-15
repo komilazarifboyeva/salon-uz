@@ -7,6 +7,7 @@ import {
   serverTimestamp,
   query,
   where,
+  getDocs,
 } from "firebase/firestore";
 import "./AddClient.css";
 
@@ -22,7 +23,20 @@ export default function AddClient({ user }) {
   const [services, setServices] = useState([]);
   const [price, setPrice] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showAlert, setShowAlert] = useState(false);
+
+  const [alertInfo, setAlertInfo] = useState({
+    show: false,
+    type: "success",
+    title: "",
+    desc: "",
+  });
+
+  const customAlert = (type, title, desc) => {
+    setAlertInfo({ show: true, type, title, desc });
+    setTimeout(() => {
+      setAlertInfo({ show: false, type: "success", title: "", desc: "" });
+    }, 5000);
+  };
 
   useEffect(() => {
     if (!user || !user.salonId || !user.name) return;
@@ -61,6 +75,40 @@ export default function AddClient({ user }) {
     e.preventDefault();
 
     try {
+      const qCheck = query(
+        collection(db, "clients"),
+        where("salonId", "==", user.salonId),
+        where("masterName", "==", user.name),
+      );
+
+      const checkSnap = await getDocs(qCheck);
+      let isConflict = false;
+
+      const newAppTime = new Date(client.appointmentDate).getTime();
+      const newAppEndTime = newAppTime + duration * 60000;
+
+      checkSnap.forEach((doc) => {
+        const data = doc.data();
+        if (data.status === "tugagan" || data.status === "bekor qilingan")
+          return;
+
+        const existTime = new Date(data.appointmentDate).getTime();
+        const existEndTime = existTime + (data.duration || 0) * 60000;
+
+        if (newAppTime < existEndTime && newAppEndTime > existTime) {
+          isConflict = true;
+        }
+      });
+
+      if (isConflict) {
+        customAlert(
+          "error",
+          "Kechirasiz,vaqt band!",
+          "Bu vaqtda boshqa mijoz ro'yxatga olingan",
+        );
+        return;
+      }
+
       await addDoc(collection(db, "clients"), {
         name: client.name,
         phone: client.phone,
@@ -74,8 +122,7 @@ export default function AddClient({ user }) {
         createdAt: serverTimestamp(),
       });
 
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 5000);
+      customAlert("success", "Muvaffaqiyatli!", "Mijoz ro'yxatga qo'shildi 💕");
 
       setClient({
         name: "",
@@ -88,26 +135,36 @@ export default function AddClient({ user }) {
       setDuration(0);
     } catch (err) {
       console.error("Mijoz qo'shishda xatolik:", err);
-      alert("Xatolik yuz berdi!");
+      customAlert(
+        "error",
+        "Xatolik!",
+        "Internet yoki serverda muammo yuz berdi",
+      );
     }
   }
 
   return (
     <div className="container py-2 position-relative">
-      {showAlert && (
+      {alertInfo.show && (
         <div
-          className="alert bg-pink text-white border-0 shadow-lg rounded-4 position-fixed top-0 start-50 translate-middle-x mt-4 d-flex align-items-center animate-shake"
+          className={`alert ${alertInfo.type === "success" ? "bg-pink" : "bg-danger"} text-white border-0 shadow-lg rounded-4 position-fixed top-0 start-50 translate-middle-x mt-4 d-flex align-items-center animate-shake`}
           style={{ zIndex: 9999, minWidth: "300px" }}
         >
-          <i className="bi bi-check-circle-fill fs-4 me-3"></i>
           <div>
-            <strong className="d-block">Muvaffaqiyatli!</strong>
-            <span className="small">Mijoz ro'yxatga qo'shildi 💕</span>
+            <strong className="d-block">{alertInfo.title}</strong>
+            <span className="small">{alertInfo.desc}</span>
           </div>
           <button
             type="button"
             className="btn-close btn-close-white ms-auto"
-            onClick={() => setShowAlert(false)}
+            onClick={() =>
+              setAlertInfo({
+                show: false,
+                type: "success",
+                title: "",
+                desc: "",
+              })
+            }
           ></button>
         </div>
       )}
