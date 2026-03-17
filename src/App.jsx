@@ -192,7 +192,7 @@ export default function App() {
                   path="/"
                   element={
                     isAdmin ? (
-                      <AddClient user={user} />
+                      <Navigate to="/clients" replace />
                     ) : isClient ? (
                       <ClientDashboard user={user} />
                     ) : isMaster ? (
