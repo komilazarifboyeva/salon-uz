@@ -70,13 +70,12 @@ const playNotificationSound = () => {
 export default function MasterDashboard({ user }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [editingApp, setEditingApp] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [filterType, setFilterType] = useState("bugungi");
+  const [deleteModal, setDeleteModal] = useState({ show: false, appId: null });
   const [showAlert, setShowAlert] = useState(false);
   const [audioAllowed, setAudioAllowed] = useState(false);
-
   const isFirstLoad = useRef(true);
   const audioAllowedRef = useRef(false);
 
@@ -175,23 +174,13 @@ export default function MasterDashboard({ user }) {
         service: editingApp.service,
         price: Number(editingApp.price),
         appointmentDate: editingApp.appointmentDate,
+        status: editingApp.status,
       });
-      setIsModalOpen(false); 
+      setIsModalOpen(false);
       setEditingApp(null);
     } catch (error) {
       console.error("Yangilashda xatolik:", error);
       alert("Yangilashda xatolik yuz berdi!");
-    }
-  };
-
-  const handleDeleteApp = async (id) => {
-    if (window.confirm("Haqiqatan ham bu mijozni o'chirmoqchimisiz?")) {
-      try {
-        await deleteDoc(doc(db, "clients", id));
-      } catch (error) {
-        console.error("O'chirishda xatolik:", error);
-        alert("O'chirishda xatolik yuz berdi!");
-      }
     }
   };
 
@@ -203,13 +192,34 @@ export default function MasterDashboard({ user }) {
     setIsModalOpen(true);
   };
 
+  const handleDeleteClick = (id) => {
+    setDeleteModal({ show: true, appId: id });
+  };
+
+  const confirmDeleteApp = async () => {
+    const id = deleteModal.appId;
+    if (!id) return;
+    try {
+      await deleteDoc(doc(db, "clients", id));
+    } catch (error) {
+      console.error("O'chirishda xatolik:", error);
+      alert("O'chirishda xatolik yuz berdi!");
+    } finally {
+      setDeleteModal({ show: false, appId: null });
+    }
+  };
+
   const bugungiAppointments = appointments.filter((a) => {
     return getTashkentDateString(a.appointmentDate) === bugunStr;
   });
 
+  const displayedAppointments =
+    filterType === "bugungi" ? bugungiAppointments : appointments;
+
   const tugatilganlar = bugungiAppointments.filter(
     (a) => a.status === "tugagan",
   ).length;
+
   const bugungiDaromad = bugungiAppointments
     .filter((a) => a.status === "tugagan")
     .reduce((sum, a) => sum + Number(a.price || 0), 0);
@@ -321,6 +331,24 @@ export default function MasterDashboard({ user }) {
                     }
                   />
                   <label htmlFor="editDate">Kelish vaqti</label>
+                </div>
+              </div>
+
+              <div className="col-12">
+                <div className="form-floating">
+                  <select
+                    className="form-select custom-inputs"
+                    id="editStatus"
+                    value={editingApp.status}
+                    onChange={(e) =>
+                      setEditingApp({ ...editingApp, status: e.target.value })
+                    }
+                  >
+                    <option value="kelmoqda">Kelmoqda</option>
+                    <option value="jarayonda">Jarayonda</option>
+                    <option value="tugagan">Tugagan</option>
+                  </select>
+                  <label htmlFor="editStatus">Mijoz holati</label>
                 </div>
               </div>
 
@@ -460,20 +488,49 @@ export default function MasterDashboard({ user }) {
           </div>
 
           <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
-            <div className="p-3 bg-pink-soft border-bottom d-flex justify-content-between align-items-center">
-              <h5 className="fw-bold text-dark-pink m-0">
-                <i className="bi bi-list-check me-2"></i>Bugungi mijozlar
-                ro'yxati
+            <div className="p-3 bg-pink-soft border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+              <h5 className="fw-bold text-dark-pink m-0 d-flex align-items-center">
+                <i className="bi bi-list-check me-2"></i>
+                {filterType === "bugungi"
+                  ? "Bugungi mijozlar"
+                  : "Barcha mijozlar"}
               </h5>
+
+              <div className="d-flex align-items-center justify-content-between gap-3">
+                <div className="bg-white rounded-pill p-1 border d-flex shadow-sm">
+                  <button
+                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                      filterType === "barchasi"
+                        ? "btn-pink  fw-bold shadow-sm"
+                        : "text-muted bg-transparent"
+                    }`}
+                    onClick={() => setFilterType("barchasi")}
+                  >
+                    Barchasi
+                  </button>
+                  <button
+                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                      filterType === "bugungi"
+                        ? "btn-pink text-white fw-bold shadow-sm"
+                        : "text-muted bg-transparent"
+                    }`}
+                    onClick={() => setFilterType("bugungi")}
+                  >
+                    Bugungi
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="list-group list-group-flush">
-              {bugungiAppointments.length === 0 ? (
+              {displayedAppointments.length === 0 ? (
                 <div className="text-center py-5 text-muted">
-                  Bugun uchun rejalashtirilgan mijozlar yo'q.
+                  {filterType === "bugungi"
+                    ? "Bugun uchun rejalashtirilgan mijozlar yo'q."
+                    : "Sizda hali mijozlar yo'q."}
                 </div>
               ) : (
-                bugungiAppointments.map((app) => (
+                displayedAppointments.map((app) => (
                   <div
                     key={app.id}
                     className="list-group-item p-4 border-bottom"
@@ -496,6 +553,8 @@ export default function MasterDashboard({ user }) {
                             <i className="bi bi-calendar-event me-1"></i>
                             {new Intl.DateTimeFormat("uz-UZ", {
                               timeZone: "Asia/Tashkent",
+                              month: "short",
+                              day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
                             }).format(new Date(app.appointmentDate))}
@@ -518,7 +577,7 @@ export default function MasterDashboard({ user }) {
                             <i className="bi bi-pencil"></i>
                           </button>
                           <button
-                            onClick={() => handleDeleteApp(app.id)}
+                            onClick={() => handleDeleteClick(app.id)}
                             className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center rounded-circle"
                             style={{
                               width: "32px",
@@ -566,6 +625,66 @@ export default function MasterDashboard({ user }) {
           </div>
         </div>
       </div>
+
+      {deleteModal.show && (
+        <>
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1040, backgroundColor: "rgba(0,0,0,0.5)" }}
+            onClick={() => setDeleteModal({ show: false, appId: null })}
+          ></div>
+
+          <div
+            className="modal fade show d-block"
+            tabIndex="-1"
+            style={{ zIndex: 1050 }}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div className="modal-dialog modal-dialog-centered px-3">
+              <div className="modal-content border-0 shadow-lg rounded-4">
+                <div className="modal-header border-bottom-0 pb-0">
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setDeleteModal({ show: false, appId: null })}
+                  ></button>
+                </div>
+                <div className="modal-body text-center pb-4 px-4">
+                  <div
+                    className="d-inline-flex justify-content-center align-items-center bg-danger-subtle text-danger rounded-circle mb-3"
+                    style={{ width: "60px", height: "60px" }}
+                  >
+                    <i className="bi bi-exclamation-triangle-fill fs-3"></i>
+                  </div>
+                  <h4 className="fw-bold text-dark">Mijozni o'chirish</h4>
+                  <p className="text-muted mt-2 small">
+                    Haqiqatan ham bu mijozni ro'yxatdan o'chirmoqchimisiz?
+                  </p>
+                  <div className="d-flex gap-3 mt-4">
+                    <button
+                      type="button"
+                      className="btn btn-light w-50 fw-semibold rounded-pill py-2"
+                      onClick={() =>
+                        setDeleteModal({ show: false, appId: null })
+                      }
+                    >
+                      Yo'q
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-pink w-50 fw-bold rounded-pill shadow-sm py-2"
+                      onClick={confirmDeleteApp}
+                    >
+                      Ha
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

@@ -19,6 +19,8 @@ export default function ClientDashboard({ user }) {
   const [services, setServices] = useState([]);
   const [myAppointments, setMyAppointments] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [filterType, setFilterType] = useState("barchasi");
+  const [deleteModal, setDeleteModal] = useState({ show: false, appId: null });
 
   const [booking, setBooking] = useState({
     salonId: "",
@@ -231,25 +233,32 @@ export default function ClientDashboard({ user }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleCancelApp = async (id) => {
-    if (window.confirm("Haqiqatan ham bu navbatni bekor qilmoqchimisiz?")) {
-      try {
-        await deleteDoc(doc(db, "clients", id));
-        showAlert("Navbat bekor qilindi", "success");
-        if (editingId === id) {
-          setEditingId(null);
-          setBooking({
-            ...booking,
-            masterName: "",
-            service: "",
-            appointmentDate: "",
-            price: 0,
-            duration: 0,
-          });
-        }
-      } catch (error) {
-        showAlert("Xatolik yuz berdi", "danger");
+  const handleCancelAppClick = (id) => {
+    setDeleteModal({ show: true, appId: id });
+  };
+
+  const confirmDeleteApp = async () => {
+    const id = deleteModal.appId;
+    if (!id) return;
+
+    try {
+      await deleteDoc(doc(db, "clients", id));
+      showAlert("Navbat bekor qilindi", "success");
+      if (editingId === id) {
+        setEditingId(null);
+        setBooking({
+          ...booking,
+          masterName: "",
+          service: "",
+          appointmentDate: "",
+          price: 0,
+          duration: 0,
+        });
       }
+    } catch (error) {
+      showAlert("Xatolik yuz berdi", "danger");
+    } finally {
+      setDeleteModal({ show: false, appId: null });
     }
   };
 
@@ -290,6 +299,23 @@ export default function ClientDashboard({ user }) {
       }
     );
   };
+
+  const isToday = (dateString) => {
+    const today = new Date();
+    const appDate = new Date(dateString);
+    return (
+      today.getDate() === appDate.getDate() &&
+      today.getMonth() === appDate.getMonth() &&
+      today.getFullYear() === appDate.getFullYear()
+    );
+  };
+
+  const displayedAppointments = myAppointments.filter((app) => {
+    if (filterType === "bugungi") {
+      return isToday(app.appointmentDate);
+    }
+    return true;
+  });
 
   return (
     <div className="container py-2 position-relative">
@@ -481,28 +507,57 @@ export default function ClientDashboard({ user }) {
 
         <div className="col-12 col-lg-7">
           <div className="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-            <div className="p-4 bg-white border-bottom d-flex justify-content-between align-items-center">
-              <h5 className="fw-bold m-0">
-                <i className="bi bi-clock-history me-2 text-pink"></i>Mening
-                navbatlarim
+            <div className="p-3 p-md-4 bg-white border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+              <h5 className="fw-bold m-0 d-flex align-items-center">
+                <i className="bi bi-clock-history me-2 text-pink fs-4"></i>
+                Mening navbatlarim
               </h5>
-              <span className="badge bg-pink-soft text-pink rounded-pill px-3 py-2">
-                Jami: {myAppointments.length} ta
-              </span>
+
+              <div className="d-flex align-items-center justify-content-between gap-3">
+                <div className="bg-light rounded-pill p-1 border d-flex">
+                  <button
+                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                      filterType === "barchasi"
+                        ? "btn-pink text-white fw-bold shadow-sm"
+                        : "text-muted bg-transparent"
+                    }`}
+                    onClick={() => setFilterType("barchasi")}
+                  >
+                    Barchasi
+                  </button>
+                  <button
+                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                      filterType === "bugungi"
+                        ? "btn-pink text-white fw-bold shadow-sm"
+                        : "text-muted bg-transparent"
+                    }`}
+                    onClick={() => setFilterType("bugungi")}
+                  >
+                    Bugungi
+                  </button>
+                </div>
+                <span className="badge bg-pink-soft text-pink rounded-pill px-3 py-2">
+                  Jami: {displayedAppointments.length} ta
+                </span>
+              </div>
             </div>
 
             <div
               className="card-body p-0"
               style={{ maxHeight: "500px", overflowY: "auto" }}
             >
-              {myAppointments.length === 0 ? (
+              {displayedAppointments.length === 0 ? (
                 <div className="text-center py-5 text-muted">
                   <i className="bi bi-calendar-x fs-1 mb-2"></i>
-                  <p>Hozircha hech qanday navbatga yozilmagansiz.</p>
+                  <p>
+                    {filterType === "bugungi"
+                      ? "Bugun uchun hech qanday navbat yo'q."
+                      : "Hozircha hech qanday navbatga yozilmagansiz."}
+                  </p>
                 </div>
               ) : (
                 <div className="list-group list-group-flush">
-                  {myAppointments.map((app) => {
+                  {displayedAppointments.map((app) => {
                     const currentSalon = getSalonDetails(app.salonId);
 
                     return (
@@ -554,7 +609,7 @@ export default function ClientDashboard({ user }) {
                                   <i className="bi bi-pencil"></i>
                                 </button>
                                 <button
-                                  onClick={() => handleCancelApp(app.id)}
+                                  onClick={() => handleCancelAppClick(app.id)}
                                   className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center rounded-circle"
                                   style={{
                                     width: "32px",
@@ -643,6 +698,66 @@ export default function ClientDashboard({ user }) {
           </div>
         </div>
       </div>
+
+      {deleteModal.show && (
+        <>
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1040, backgroundColor: "rgba(0,0,0,0.5)" }}
+            onClick={() => setDeleteModal({ show: false, appId: null })}
+          ></div>
+
+          <div
+            className="modal fade show d-block"
+            tabIndex="-1"
+            style={{ zIndex: 1050 }}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div className="modal-dialog modal-dialog-centered px-3">
+              <div className="modal-content border-0 shadow-lg rounded-4">
+                <div className="modal-header border-bottom-0 pb-0">
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={() => setDeleteModal({ show: false, appId: null })}
+                  ></button>
+                </div>
+                <div className="modal-body text-center pb-4 px-4">
+                  <div
+                    className="d-inline-flex justify-content-center align-items-center bg-danger-subtle text-danger rounded-circle mb-3"
+                    style={{ width: "60px", height: "60px" }}
+                  >
+                    <i className="bi bi-exclamation-triangle-fill fs-3"></i>
+                  </div>
+                  <h4 className="fw-bold text-dark">Navbatni bekor qilish</h4>
+                  <p className="text-muted mt-2 small">
+                    Haqiqatan ham bu navbatni bekor qilmoqchimisiz?
+                  </p>
+                  <div className="d-flex gap-3 mt-4">
+                    <button
+                      type="button"
+                      className="btn btn-light w-50 fw-semibold rounded-pill py-2"
+                      onClick={() =>
+                        setDeleteModal({ show: false, appId: null })
+                      }
+                    >
+                      Yo'q
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-pink w-50 fw-bold rounded-pill shadow-sm py-2"
+                      onClick={confirmDeleteApp}
+                    >
+                      Ha
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
