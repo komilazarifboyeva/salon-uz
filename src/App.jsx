@@ -14,7 +14,7 @@ import Navbat from "./components/Navbat";
 import ClientDashboard from "./components/ClientDashboard";
 import MasterDashboard from "./components/MasterDashboard";
 import MasterReport from "./components/MasterReport";
-import MasterServices from "./components/MasterServices"; 
+import MasterServices from "./components/MasterServices";
 import ProtectedRoute from "./ProtectedRoute";
 
 import "./App.css";
@@ -26,6 +26,12 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        if (!currentUser.emailVerified) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
         try {
           const userDocRef = doc(db, "users", currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);
@@ -38,11 +44,22 @@ export default function App() {
               ...userData,
             });
           } else {
-            setUser(currentUser);
+            console.warn(
+              "Foydalanuvchi hujjati bazadan topilmadi! Default 'client' roli berildi.",
+            );
+            setUser({
+              uid: currentUser.uid,
+              email: currentUser.email,
+              role: "client",
+            });
           }
         } catch (error) {
           console.error("Foydalanuvchi ma'lumotlarini olishda xatolik:", error);
-          setUser(currentUser);
+          setUser({
+            uid: currentUser.uid,
+            email: currentUser.email,
+            role: "client",
+          });
         }
       } else {
         setUser(null);
@@ -66,9 +83,10 @@ export default function App() {
   const getNavLinkClass = ({ isActive }) =>
     isActive ? "custom-nav-link custom-active" : "custom-nav-link";
 
-  const isAdmin = user?.role === "admin" || user?.role === "owner";
-  const isClient = user?.role === "client";
-  const isMaster = user?.role === "master";
+  const userRole = user?.role || "client";
+  const isAdmin = userRole === "admin" || userRole === "owner";
+  const isClient = userRole === "client";
+  const isMaster = userRole === "master";
 
   return (
     <div className="min-vh-100 bg-soft-pink app-wrapper">
@@ -105,7 +123,7 @@ export default function App() {
               {isClient && (
                 <NavLink className={getNavLinkClass} to="/" end>
                   <i className="bi bi-pencil-square"></i>{" "}
-                  <span className="nav-text">Navbatga yozilish</span>
+                  <span className="nav-text">Navbat olish</span>
                 </NavLink>
               )}
 
@@ -160,14 +178,13 @@ export default function App() {
             <Routes>
               <Route
                 path="/login"
-                element={user ? <Navigate to="/navbat" replace /> : <Login />}
+                element={user ? <Navigate to="/" replace /> : <Login />}
               />
               <Route
                 path="/register"
-                element={
-                  user ? <Navigate to="/navbat" replace /> : <Register />
-                }
+                element={user ? <Navigate to="/" replace /> : <Register />}
               />
+
               <Route path="/navbat" element={<Navbat user={user} />} />
 
               <Route element={<ProtectedRoute user={user} />}>
@@ -180,11 +197,13 @@ export default function App() {
                       <ClientDashboard user={user} />
                     ) : isMaster ? (
                       <MasterDashboard user={user} />
-                    ) : null
+                    ) : (
+                      <Navigate to="/navbat" replace />
+                    )
                   }
                 />
 
-                {isAdmin ? (
+                {isAdmin && (
                   <>
                     <Route
                       path="/clients"
@@ -196,55 +215,28 @@ export default function App() {
                     />
                     <Route path="/report" element={<Report user={user} />} />
                   </>
-                ) : (
+                )}
+
+                {isMaster && (
                   <>
                     <Route
-                      path="/clients"
-                      element={<Navigate to="/" replace />}
+                      path="/master-report"
+                      element={<MasterReport user={user} />}
                     />
                     <Route
-                      path="/services"
-                      element={<Navigate to="/" replace />}
+                      path="/master-services"
+                      element={<MasterServices user={user} />}
                     />
                     <Route
-                      path="/report"
-                      element={<Navigate to="/" replace />}
+                      path="/master-add-client"
+                      element={<AddClient user={user} />}
                     />
                   </>
                 )}
 
-                <Route
-                  path="/master-report"
-                  element={
-                    isMaster ? (
-                      <MasterReport user={user} />
-                    ) : (
-                      <Navigate to="/" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/master-services"
-                  element={
-                    isMaster ? (
-                      <MasterServices user={user} />
-                    ) : (
-                      <Navigate to="/" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/master-add-client"
-                  element={
-                    isMaster ? (
-                      <AddClient user={user} />
-                    ) : (
-                      <Navigate to="/" replace />
-                    )
-                  }
-                />
-
                 <Route path="/cabinet" element={<Cabinet user={user} />} />
+
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
           </div>
