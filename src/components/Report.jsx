@@ -101,8 +101,6 @@ export default function Report({ user }) {
     .filter((c) => c.status === "tugagan")
     .reduce((sum, c) => sum + Number(c.price || 0), 0);
 
-  const avgIncome = completed > 0 ? Math.floor(totalIncome / completed) : 0;
-
   const totalMinutes = filteredClients
     .filter((c) => c.status === "tugagan")
     .reduce((sum, c) => sum + Number(c.duration || 0), 0);
@@ -173,7 +171,7 @@ export default function Report({ user }) {
 
       {filteredClients.length > 0 ? (
         <>
-          <div className="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 mb-4">
+          <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-4">
             <div className="col">
               <div className="card border-0 shadow-sm rounded-4 p-3 h-100 text-center">
                 <h3 className="fw-bold text-primary mb-1">{totalClients}</h3>
@@ -199,17 +197,6 @@ export default function Report({ user }) {
                 </h4>
                 <span className="small text-pink fw-bold uppercase">
                   Jami Daromad
-                </span>
-              </div>
-            </div>
-
-            <div className="col">
-              <div className="card border-0 shadow-sm rounded-4 p-3 h-100 text-center">
-                <h4 className="fw-bold text-dark mb-1">
-                  {avgIncome.toLocaleString()}
-                </h4>
-                <span className="small text-muted fw-semibold uppercase">
-                  O'rtacha
                 </span>
               </div>
             </div>
