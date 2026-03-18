@@ -499,7 +499,7 @@ export default function MasterDashboard({ user }) {
               <div className="d-flex align-items-center justify-content-between gap-3">
                 <div className="bg-white rounded-pill p-1 border d-flex shadow-sm">
                   <button
-                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                    className={`btn btn-sm rounded-pill border-0 px-3 ${
                       filterType === "barchasi"
                         ? "btn-pink  fw-bold shadow-sm"
                         : "text-muted bg-transparent"
@@ -509,7 +509,7 @@ export default function MasterDashboard({ user }) {
                     Barchasi
                   </button>
                   <button
-                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                    className={`btn btn-sm rounded-pill border-0 px-3 ${
                       filterType === "bugungi"
                         ? "btn-pink text-white fw-bold shadow-sm"
                         : "text-muted bg-transparent"

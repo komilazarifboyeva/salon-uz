@@ -516,7 +516,7 @@ export default function ClientDashboard({ user }) {
               <div className="d-flex align-items-center justify-content-between gap-3">
                 <div className="bg-light rounded-pill p-1 border d-flex">
                   <button
-                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                    className={`btn btn-sm rounded-pill border-0 px-3 ${
                       filterType === "barchasi"
                         ? "btn-pink text-white fw-bold shadow-sm"
                         : "text-muted bg-transparent"
@@ -526,7 +526,7 @@ export default function ClientDashboard({ user }) {
                     Barchasi
                   </button>
                   <button
-                    className={`btn btn-sm rounded-pill border-0 px-3 transition-base ${
+                    className={`btn btn-sm rounded-pill border-0 px-3 ${
                       filterType === "bugungi"
                         ? "btn-pink text-white fw-bold shadow-sm"
                         : "text-muted bg-transparent"
@@ -537,7 +537,7 @@ export default function ClientDashboard({ user }) {
                   </button>
                 </div>
                 <span className="badge bg-pink-soft text-pink rounded-pill px-3 py-2">
-                  Jami: {displayedAppointments.length} ta
+                  Jami:{displayedAppointments.length} ta
                 </span>
               </div>
             </div>
