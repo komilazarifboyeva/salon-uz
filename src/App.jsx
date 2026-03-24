@@ -92,7 +92,7 @@ export default function App() {
     <div className="min-vh-100 bg-soft-pink app-wrapper">
       <nav className="custom-navbar bg-dark-pink d-flex justify-content-between align-items-center">
         <NavLink to="/" className="brand-logo">
-          <i className="bi bi-gem me-2"></i> Women's Beauty Salon
+          <i className="bi bi-gem me-2"></i> Smart Salon
         </NavLink>
 
         <div className="nav-menu">
