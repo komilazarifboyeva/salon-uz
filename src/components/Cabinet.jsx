@@ -20,7 +20,7 @@ export default function Cabinet({ user }) {
     name: "",
     phone: "",
     specialty: "",
-    salonLocation: "", 
+    salonLocation: "",
   });
   const [passForm, setPassForm] = useState({
     currentPassword: "",

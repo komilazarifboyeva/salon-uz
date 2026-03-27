@@ -22,7 +22,7 @@ export default function Services({ user }) {
 
   const [servicesTable, setServicesTable] = useState([]);
   const [masters, setMasters] = useState([]);
-  const [filterMaster, setFilterMaster] = useState("all"); 
+  const [filterMaster, setFilterMaster] = useState("all");
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -110,7 +110,7 @@ export default function Services({ user }) {
       name: service.name,
       price: String(service.price),
       duration: service.duration || "",
-      masterName: service.masterName || "", 
+      masterName: service.masterName || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -283,7 +283,7 @@ export default function Services({ user }) {
                       #
                     </th>
                     <th className="py-3">Xizmat Nomi</th>
-                    <th className="py-3">Master</th> 
+                    <th className="py-3">Master</th>
                     <th className="py-3">Narxi</th>
                     <th className="py-3">Vaqt</th>
                     <th className="py-3 text-center">Amallar</th>

@@ -24,7 +24,7 @@ export default function Login() {
       const user = userCredential.user;
 
       if (!user.emailVerified) {
-        await signOut(auth); 
+        await signOut(auth);
         setErrorMsg(
           "Iltimos, avval emailingizni tasdiqlang! Pochtangizga (Spam papkasiga ham qarang) xat yuborilgan.",
         );
